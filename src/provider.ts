@@ -1,10 +1,7 @@
 import * as vscode from 'vscode';
 
 import { isDependency, getPackagePathByLine } from './fileManager';
-import { COMMAND_NAME } from './extension';
-
-const END_BRACKET_REGEX = /},?/;
-
+import { GOTO_PACKAGE_COMMAND } from './constants';
 export default class CodeLensProvider implements vscode.CodeLensProvider {
     provideCodeLenses(
         document: vscode.TextDocument,
@@ -21,7 +18,7 @@ export default class CodeLensProvider implements vscode.CodeLensProvider {
                 isLineInDependencyScope = true;
                 return false;
             }
-            if(isLineInDependencyScope && END_BRACKET_REGEX.test(text)) {
+            if(isLineInDependencyScope && /},?/.test(text)) {
                 isLineInDependencyScope = false;
             }
 
@@ -33,7 +30,7 @@ export default class CodeLensProvider implements vscode.CodeLensProvider {
                 line.range,
                 {
                     title: 'go to package',
-                    command: COMMAND_NAME,
+                    command: GOTO_PACKAGE_COMMAND,
                     arguments: [line.lineNumber],
                 }
             );

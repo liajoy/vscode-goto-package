@@ -15,7 +15,8 @@
 		"Other"
 	],
 	"keywords": [
-		"package.json",
+		"npm",
+		"package",
 		"navigate",
 		"node_modules"
 	],
@@ -32,8 +33,20 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "gotoPackage.navigate",
+				"command": "gotoPackage.gotoPackage",
 				"title": "Go to package"
+			},
+			{
+				"command": "gotoPackage.gotoNpmPage",
+				"title": "Go to npm page"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "gotoPackage.gotoPackage",
+				"key": "F12",
+				"mac": "F12",
+				"when": "editorTextFocus"
 			}
 		]
 	},
