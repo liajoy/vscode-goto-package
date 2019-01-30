@@ -7,7 +7,7 @@
 		"type": "git",
 		"url": "https://github.com/liajoy/goto-package.git"
 	},
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"engines": {
 		"vscode": "^1.30.0"
 	},
@@ -24,11 +24,11 @@
 		"onLanguage:json",
 		"onCommand:gotoPackage.gotoPackage"
 	],
-	"capabilities" : {
-        "codeLensProvider" : {
-            "resolveProvider": "true"
-        }
-    },
+	"capabilities": {
+		"codeLensProvider": {
+			"resolveProvider": "true"
+		}
+	},
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
