@@ -5,7 +5,7 @@
 	"publisher": "liajoy",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/liajoy/goto-package.git"
+		"url": "https://github.com/liajoy/vscode-goto-package"
 	},
 	"version": "0.0.2",
 	"engines": {
@@ -16,13 +16,13 @@
 	],
 	"keywords": [
 		"npm",
-		"package",
+		"package.json",
 		"navigate",
 		"node_modules"
 	],
 	"activationEvents": [
 		"onLanguage:json",
-		"onCommand:gotoPackage.gotoPackage"
+		"onCommand:gotoPackage.gotoPickPackage"
 	],
 	"capabilities": {
 		"codeLensProvider": {
@@ -33,12 +33,16 @@
 	"contributes": {
 		"commands": [
 			{
+				"command": "gotoPackage.gotoPickPackage",
+				"title": "gotoPackage: Pick and go to a package"
+			},
+			{
 				"command": "gotoPackage.gotoPackage",
-				"title": "Go to package"
+				"title": "gotoPackage: Go to selected package"
 			},
 			{
 				"command": "gotoPackage.gotoNpmPage",
-				"title": "Go to npm page"
+				"title": "gotoPackage: Visit page of npm"
 			}
 		],
 		"keybindings": [
@@ -47,6 +51,19 @@
 				"key": "F12",
 				"mac": "F12",
 				"when": "editorTextFocus"
+			}
+		],
+		"configuration": [
+			{
+				"title": "Goto Package",
+				"properties": {
+					"GotoPackage.searchNodeModules": {
+						"type": "boolean",
+						"default": false,
+						"description": "Search packages in node_modules",
+						"scope": "window"
+					}
+				}
 			}
 		]
 	},
