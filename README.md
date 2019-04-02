@@ -17,10 +17,10 @@ Jump to selected package.json file in node_modules quickly.
 
 ### Available Configuration
 
-These packages in select box are the dependencies in the package.json by default, so those packages which is the dependence of dependence(--depth=2) are excluded, but you make it show.
+These packages in select box are the dependencies in the package.json by default, you can make extension to collect all packages in node_modules:
 
 ``` json
-    "GotoPackage.SearchNodeModules": true
+    "GotoPackage.searchNodeModules": true
 ```
 
 ## Change Log
