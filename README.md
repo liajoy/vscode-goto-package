@@ -23,6 +23,10 @@ These packages in select box are the dependencies in the package.json by default
     "GotoPackage.searchNodeModules": true
 ```
 
+## Todos
+
+- [] Supports mono repo.
+
 ## Change Log
 
 See change log [here](https://github.com/liajoy/vscode-goto-package/blob/master/README.md).
