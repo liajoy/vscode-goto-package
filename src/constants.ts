@@ -10,16 +10,16 @@ export enum ErrorMessage {
     PACKAGE_INVALID = 'Content selected is not a package.'
 }
 
-export const NPM_URL = 'https://www.npmjs.com/package/';
+export const NPM_URL = 'https://www.npmjs.com/package/'
 
-export const PACKAGE_JSON = 'package.json';
+export const PACKAGE_JSON = 'package.json'
 
-export const NODE_MODULES = 'node_modules';
+export const NODE_MODULES = 'node_modules'
 
-export const QUICK_PICK_PLACEHOLDER = 'Please pick a package which in your root node_modules';
+export const QUICK_PICK_PLACEHOLDER = 'Please pick a package which in your root node_modules'
 
-export const ORGANIZATION_SYMBOL = '@';
+export const ORGANIZATION_SYMBOL = '@'
 
-export const DEPENDENCY_REGEX = /ependencies\": {/;
+export const DEPENDENCY_REGEX = /ependencies": {/
 
-export const PACKAGE_NAME_REGEX = /\"(\S*)\": /;
+export const PACKAGE_NAME_REGEX = /"(\S*)": /
