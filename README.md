@@ -25,6 +25,10 @@ Name|Description|default|
 
 
 
+## Todos
+
+- [] Supports mono repo.
+
 ## Change Log
 
 See change log [here](https://github.com/liajoy/vscode-goto-package/blob/master/README.md).
