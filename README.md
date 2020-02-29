@@ -2,26 +2,28 @@
 
 Jump to selected package.json file in node_modules quickly.
 
-## It looks like this:
+## How To Use
 
-![ScreenshotJump](images/jump.gif)
 ![ScreenshotPick](images/pick.gif)
+
+Run ⌘ ⇧ P on mac os, ctrl ⇧ P on windows.
+
+Then type pickPackage to show a list of packages in node_modules.
 
 ## Features
 
-### Available Commands
+Command( `GotoPackage.pickPackage` ) is used for picking a package from node_modules. When a package is picked, you can choose a action from below actions:
 
-- `Go to selected package` or the default shortcut `F12` to jump to the package.json file.
-- `Visit page of npm` to jump to the package page of npm.
-- `Pick and go to a package` to pick a package in select box then jump to the package.json file.
+- jump to package.json
+- jump to npm page
 
 ### Available Configuration
 
-These packages in select box are the dependencies in the package.json by default, so those packages which is the dependence of dependence(--depth=2) are excluded, but you make it show.
+Name|Description|default|
+-|-|-|
+`gotoPackage.searchNodeModules` | Specifies whether to searches `node_modules` folder to find more local packages | false
 
-``` json
-    "GotoPackage.SearchNodeModules": true
-```
+
 
 ## Change Log
 

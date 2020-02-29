@@ -1,99 +1,109 @@
-import * as vscode from 'vscode'
-
 import * as fs from 'fs'
-import * as path from 'path'
-import {
-    PACKAGE_JSON, ORGANIZATION_SYMBOL, DEPENDENCY_REGEX, PACKAGE_NAME_REGEX, NODE_MODULES
-} from './constants'
+import { PACKAGE_JSON, ORGANIZATION_SYMBOL, NODE_MODULES, ErrorMessage } from './constants'
 
-export function isDependency (text: string) {
-    return DEPENDENCY_REGEX.test(text)
+export const excludesRe = /^\./
+
+export const packageNameRe = /(@\w*\/)?\w*$/
+
+export function execRegEx (regEx: RegExp, str: string) {
+    const matches = regEx.exec(str)
+    return matches ? matches[0] : ''
 }
 
-export function getPackageNameByLine (document: vscode.TextDocument, lineNumber: number) {
-    const line = document.lineAt(lineNumber)
-    const { text } = line
-    const matches = PACKAGE_NAME_REGEX.exec(text)
-
-    if (!matches || !matches.length) {
-        return null
-    }
-
-    return matches[1]
+interface PackageJson {
+    name: string;
+    version: string;
+    description: string;
+    dependencies?: {
+        [key: string]: string;
+    };
+    devDependencies?: {
+        [key: string]: string;
+    };
 }
-
-export function getPackageJSON (packageName: string) {
-    return `${packageName}/${PACKAGE_JSON}`
-}
-
-export function getPackagePathByLine (document: vscode.TextDocument, lineNumber: number) {
-    const packageName = getPackageNameByLine(document, lineNumber)
-    const dirname = path.dirname(document.fileName)
-
-    if (packageName) {
-        const path = `${dirname}/${NODE_MODULES}/${getPackageJSON(packageName)}`
-
-        if (fs.existsSync(path)) {
-            return path
+export function getPackageJson (packagePath: string): PackageJson {
+    try {
+        const packageJsonPath = packagePath + `/${PACKAGE_JSON}`
+        return JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+    } catch (err) {
+        return {
+            name: '',
+            version: '0.0.0',
+            description: ErrorMessage.PackageNotFound
         }
     }
-
-    return null
 }
+export class PackageInfo {
+    static create (packagePath: string, packageName = '') {
+        packagePath = packagePath + (packageName && `/${packageName}`)
 
-export function getPackageLines (document: vscode.TextDocument) {
-    let isLineInDependencyScope = false
+        const packageJson = getPackageJson(packagePath)
+        const isExists = packageJson.description !== ErrorMessage.PackageNotFound
+        packageJson.name = packageJson.name || execRegEx(packageNameRe, packagePath)
 
-    return new Array(document.lineCount).fill('')
-        .map((line, idx) => document.lineAt(idx))
-        .filter((line) => {
-            const { text } = line
-
-            if (isDependency(text)) {
-                isLineInDependencyScope = true
-                return false
-            }
-            if (isLineInDependencyScope && /},?/.test(text)) {
-                isLineInDependencyScope = false
-            }
-
-            return isLineInDependencyScope
+        return new PackageInfo({
+            ...packageJson,
+            path: isExists ? packagePath : ''
         })
+    }
+
+    name: string;
+    version: string;
+    path: string;
+    description: string;
+
+    get isExists () {
+        return this.path !== ''
+    }
+
+    constructor (options: {
+        name: string;
+        version: string;
+        path: string;
+        description: string;
+    }) {
+        this.name = options.name
+        this.path = options.path
+        this.version = options.version
+        this.description = options.description
+    }
 }
 
-export async function openAndLocateFile (filePath: string) {
-    await vscode.window.showTextDocument(
-        vscode.Uri.file(filePath),
-        { preview: false }
-    )
-    vscode.commands.executeCommand(
-        'workbench.files.action.showActiveFileInExplorer'
-    )
+export function getPackageFolderPath (dirname: string) {
+    return dirname + `/${NODE_MODULES}`
 }
 
-export function openBrowserPage (url: string) {
-    vscode.commands.executeCommand(
-        'vscode.open',
-        vscode.Uri.parse(url)
-    )
-}
-
-export function getPackagesNameDeeply (nodeModulesPath: string, _prefix = ''): string[] {
-    let packagesName: string[] = []
-
-    fs.readdirSync(nodeModulesPath).forEach((file) => {
-        if (file.indexOf(ORGANIZATION_SYMBOL) > -1) {
-            packagesName = packagesName.concat(
-                getPackagesNameDeeply(`${nodeModulesPath}/${file}`, `${file}/`)
-            )
-        } else {
-            packagesName.push(`${_prefix}${file}`)
+export function collectPackageInfos (packageFolderPath: string) {
+    const packageInfos: PackageInfo[] = []
+    fs.readdirSync(packageFolderPath).forEach(packageName => {
+        const packagePath = packageFolderPath + `/${packageName}`
+        if (packageName.indexOf(ORGANIZATION_SYMBOL) > -1) {
+            packageInfos.push(...collectPackageInfos(packagePath))
+        } else if (!excludesRe.test(packageName)) {
+            const packageInfo = PackageInfo.create(packagePath)
+            packageInfos.push(packageInfo)
         }
     })
-
-    return packagesName
+    return packageInfos
 }
 
-export function handleError (err: Error) {
-    vscode.window.showErrorMessage(err.message)
+export function getPackageInfosByDependencyFile (rootPath: string) {
+    const packageJson = getPackageJson(rootPath)
+    const packageFolderPath = getPackageFolderPath(rootPath)
+    const devDependencies = packageJson.devDependencies || {}
+    const dependencies = packageJson.dependencies || {}
+    const packageInfos: PackageInfo[] = []
+
+    Object.entries({
+        ...dependencies,
+        ...devDependencies
+    }).forEach(([name, version]) => {
+        const packageInfo = PackageInfo.create(packageFolderPath, name)
+        if (!packageInfo.isExists) {
+            packageInfo.version = version
+        }
+        packageInfos.push(packageInfo)
+    })
+
+    return packageInfos
 }

@@ -21,8 +21,7 @@
 		"node_modules"
 	],
 	"activationEvents": [
-		"onLanguage:json",
-		"onCommand:gotoPackage.gotoPickPackage"
+		"onCommand:GotoPackage.pickPackage"
 	],
 	"capabilities": {
 		"codeLensProvider": {
@@ -33,31 +32,15 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "gotoPackage.gotoPickPackage",
-				"title": "gotoPackage: Pick and go to a package"
-			},
-			{
-				"command": "gotoPackage.gotoPackage",
-				"title": "gotoPackage: Go to selected package"
-			},
-			{
-				"command": "gotoPackage.gotoNpmPage",
-				"title": "gotoPackage: Visit page of npm"
-			}
-		],
-		"keybindings": [
-			{
-				"command": "gotoPackage.gotoPackage",
-				"key": "F12",
-				"mac": "F12",
-				"when": "editorTextFocus"
+				"command": "GotoPackage.pickPackage",
+				"title": "GotoPackage: Pick a package"
 			}
 		],
 		"configuration": [
 			{
 				"title": "Goto Package",
 				"properties": {
-					"GotoPackage.searchNodeModules": {
+					"gotoPackage.searchNodeModules": {
 						"type": "boolean",
 						"default": false,
 						"description": "Search packages in node_modules",

@@ -1,13 +1,10 @@
 export enum ExtensionCommand {
-    GOTO_PACKAGE = 'gotoPackage.gotoPackage',
-    GOTO_NPM_PAGE = 'gotoPackage.gotoNpmPage',
-    GOTO_PICK_PACKAGE = 'gotoPackage.gotoPickPackage'
+    PickPackage = 'GotoPackage.pickPackage',
 }
 
 export enum ErrorMessage {
-    WORKSPACE_IS_NOT_OPEN = 'Please open a workspace.',
-    PACKAGE_NOT_FOUND = 'This package can\'t be found in node_modules folder.',
-    PACKAGE_INVALID = 'Content selected is not a package.'
+    WorkspaceIsNotOpen = 'Please open a workspace.',
+    PackageNotFound = 'This package can\'t be found in node_modules folder.',
 }
 
 export const NPM_URL = 'https://www.npmjs.com/package/'
@@ -16,10 +13,12 @@ export const PACKAGE_JSON = 'package.json'
 
 export const NODE_MODULES = 'node_modules'
 
-export const QUICK_PICK_PLACEHOLDER = 'Please pick a package which in your root node_modules'
+export const PACKAGES_QUICK_PICK_PLACEHOLDER = 'Please pick a package.'
+
+export const ACTIONS_QUICK_PICK_PLACEHOLDER = 'Please pick a action.'
 
 export const ORGANIZATION_SYMBOL = '@'
 
-export const DEPENDENCY_REGEX = /ependencies": {/
+export const WORKSPACE = 'workspaces'
 
-export const PACKAGE_NAME_REGEX = /"(\S*)": /
+export const CONFIG_NAMESPACE = 'gotoPackage'

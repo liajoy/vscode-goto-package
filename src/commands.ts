@@ -1,115 +1,86 @@
 import * as vscode from 'vscode'
 
 import {
-    ExtensionCommand, ErrorMessage, NPM_URL, PACKAGE_JSON, QUICK_PICK_PLACEHOLDER, NODE_MODULES
+    ExtensionCommand, ErrorMessage, PACKAGES_QUICK_PICK_PLACEHOLDER, ACTIONS_QUICK_PICK_PLACEHOLDER, CONFIG_NAMESPACE
 } from './constants'
 import {
-    getPackageLines, getPackageNameByLine, getPackagePathByLine, openAndLocateFile, openBrowserPage, getPackagesNameDeeply, getPackageJSON, handleError
+    PackageInfo, collectPackageInfos, getPackageInfosByDependencyFile, getPackageFolderPath
 } from './utils'
+import { Action, actions } from './actions'
 
-export const gotoPackageCommand = vscode.commands.registerTextEditorCommand(
-    ExtensionCommand.GOTO_PACKAGE,
-    async (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, lineNumber: number) => {
-        try {
-            const { document } = textEditor
-            const line = lineNumber || textEditor.selection.anchor.line || 0
-            const packagePath = getPackagePathByLine(document, line)
+function quickPickAcceptPromise (quickPick: vscode.QuickPick<vscode.QuickPickItem>) {
+    return new Promise(quickPick.onDidAccept)
+}
 
-            if (packagePath) {
-                openAndLocateFile(packagePath)
-            } else {
-                throw new Error(ErrorMessage.PACKAGE_NOT_FOUND)
-            }
-        } catch (err) {
-            handleError(err)
-        }
+async function showActionsQuickPick (packageInfo: PackageInfo) {
+    const actionsQuickPick = vscode.window.createQuickPick()
+    actionsQuickPick.placeholder = ACTIONS_QUICK_PICK_PLACEHOLDER
+    actionsQuickPick.items = actions
+
+    actionsQuickPick.show()
+    await quickPickAcceptPromise(actionsQuickPick)
+
+    const activeItem = actionsQuickPick.activeItems[0]
+    actionsQuickPick.hide()
+    actionsQuickPick.dispose()
+
+    await (activeItem as Action).exec(packageInfo)
+}
+
+async function showPackagesQuickPick (packageInfos: PackageInfo[]): Promise<PackageInfo> {
+    const packagesQuickPick = vscode.window.createQuickPick()
+    const PACKAGE_INFO_KEY = '__packageInfo__'
+    const quickPickItems = packageInfos.map(packageInfo => ({
+        label: packageInfo.name,
+        detail: packageInfo.description,
+        description: packageInfo.version,
+        [PACKAGE_INFO_KEY]: packageInfo
+    } as vscode.QuickPickItem))
+    packagesQuickPick.placeholder = PACKAGES_QUICK_PICK_PLACEHOLDER
+    packagesQuickPick.items = quickPickItems
+
+    packagesQuickPick.show()
+    await quickPickAcceptPromise(packagesQuickPick)
+
+    const activeItem = packagesQuickPick.activeItems[0]
+    const packageInfo = (activeItem as any)[PACKAGE_INFO_KEY]
+    packagesQuickPick.hide()
+    packagesQuickPick.dispose()
+
+    return packageInfo
+}
+
+type Config = {
+    searchNodeModules: boolean;
+}
+function getConfig (workspaceConfig: vscode.WorkspaceConfiguration) {
+    const config: Config = workspaceConfig.get(CONFIG_NAMESPACE) || {} as Config
+    return {
+        searchNodeModules: config.searchNodeModules
     }
-)
+}
 
-export const gotoNpmPageCommand = vscode.commands.registerTextEditorCommand(
-    ExtensionCommand.GOTO_NPM_PAGE,
-    async (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, lineNumber: number) => {
-        try {
-            const { document } = textEditor
-            const line = lineNumber || textEditor.selection.anchor.line || 0
-            const packageName = getPackageNameByLine(document, line)
-
-            if (packageName) {
-                openBrowserPage(`${NPM_URL}${packageName}`)
-            } else {
-                throw new Error(ErrorMessage.PACKAGE_NOT_FOUND)
-            }
-        } catch (err) {
-            handleError(err)
-        }
-    }
-)
+function handleError (err: Error) {
+    vscode.window.showErrorMessage(err.message)
+}
 
 export const gotoPickPackageCommand = vscode.commands.registerCommand(
-    ExtensionCommand.GOTO_PICK_PACKAGE,
+    ExtensionCommand.PickPackage,
     async () => {
         try {
             const { rootPath } = vscode.workspace
-            const searchNodeModules = vscode.workspace.getConfiguration().get('searchNodeModules')
-
-            if (rootPath) {
-                const packagesPath: { [key: string]: string } = {}
-                let packagesName: null|string[] = null
-
-                if (searchNodeModules) {
-                    const nodeModulesPath = `${rootPath}/${NODE_MODULES}`
-
-                    packagesName = getPackagesNameDeeply(nodeModulesPath)
-                    packagesName.forEach((packageName) => {
-                        packagesPath[packageName] = `${nodeModulesPath}/${getPackageJSON(packageName)}`
-                    })
-                } else {
-                    const packagePath = `${rootPath}/${PACKAGE_JSON}`
-                    const document = await vscode.workspace.openTextDocument(
-                        vscode.Uri.file(packagePath)
-                    )
-
-                    packagesName = getPackageLines(document)
-                        .reduce((packagesName, line) => {
-                            const packageName = getPackageNameByLine(document, line.lineNumber)
-
-                            if (packageName) {
-                                const packagePath = getPackagePathByLine(document, line.lineNumber)
-                                packagesName.push(packageName)
-                                packagesPath[packageName] = packagePath
-                            }
-
-                            return packagesName
-                        }, [] as string[])
-                }
-
-                const quickPickItems = (packagesName as string[]).map((packageName) => ({
-                    label: packageName,
-                    detail: packagesPath[packageName] ? '' : ErrorMessage.PACKAGE_NOT_FOUND
-                } as vscode.QuickPickItem))
-
-                const quickPick = vscode.window.createQuickPick()
-                quickPick.items = quickPickItems
-                quickPick.placeholder = QUICK_PICK_PLACEHOLDER
-
-                quickPick.onDidAccept(async () => {
-                    const packagePicked = quickPick.activeItems[0]
-                    const isPackageExist = !packagePicked.detail
-
-                    if (isPackageExist) {
-                        const packageName = packagePicked.label
-
-                        openAndLocateFile(packagesPath[packageName])
-                        quickPick.hide()
-                        quickPick.dispose()
-                    } else {
-                        handleError(new Error(ErrorMessage.PACKAGE_NOT_FOUND))
-                    }
-                })
-                quickPick.show()
-            } else {
-                throw new Error(ErrorMessage.WORKSPACE_IS_NOT_OPEN)
+            if (!rootPath) {
+                throw new Error(ErrorMessage.WorkspaceIsNotOpen)
             }
+
+            const config = getConfig(vscode.workspace.getConfiguration())
+            const packageFolderPath = getPackageFolderPath(rootPath)
+            const packageInfos: PackageInfo[] = config.searchNodeModules
+                ? collectPackageInfos(packageFolderPath)
+                : getPackageInfosByDependencyFile(rootPath)
+
+            const packageInfo = await showPackagesQuickPick(packageInfos)
+            await showActionsQuickPick(packageInfo)
         } catch (err) {
             handleError(err)
         }
